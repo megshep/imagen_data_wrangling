@@ -1,0 +1,40 @@
+# Load CSV
+df <- read.csv("vector.csv")
+
+# Calculate median observed increments
+median_inc_fu2 <- median(df$Age_FU2 - df$Age_BL, na.rm = TRUE)
+median_inc_fu3 <- median(df$Age_FU3 - df$Age_BL, na.rm = TRUE)
+
+# Function to impute missing ages
+impute_age <- function(age_bl, age_fu2, age_fu3, med_inc2, med_inc3) {
+  # If FU2 missing but BL & FU3 available -> interpolate (midpoint)
+  if (is.na(age_fu2) & !is.na(age_bl) & !is.na(age_fu3)) {
+    age_fu2 <- age_bl + (age_fu3 - age_bl)/2
+  }
+  # If FU3 missing but BL & FU2 available -> extrapolate
+  if (is.na(age_fu3) & !is.na(age_bl) & !is.na(age_fu2)) {
+    age_fu3 <- age_bl + 2*(age_fu2 - age_bl)
+  }
+  # If both missing -> use median observed increments
+  if (is.na(age_fu2) & is.na(age_fu3) & !is.na(age_bl)) {
+    age_fu2 <- age_bl + med_inc2
+    age_fu3 <- age_bl + med_inc3
+  }
+  return(c(age_bl, age_fu2, age_fu3))
+}
+
+# Apply imputation row by row
+df[, c("Age_BL", "Age_FU2", "Age_FU3")] <- t(apply(df, 1, function(row) {
+  impute_age(
+    as.numeric(row["Age_BL"]),
+    as.numeric(row["Age_FU2"]),
+    as.numeric(row["Age_FU3"]),
+    median_inc_fu2,
+    median_inc_fu3
+  )
+}))
+
+# Save imputed CSV
+write.csv(df, "vector_imputed.csv", row.names = FALSE)
+
+cat("Imputation complete. File saved as vector_imputed.csv\n")
