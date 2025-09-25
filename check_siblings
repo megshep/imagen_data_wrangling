@@ -1,0 +1,18 @@
+library(openxlsx)
+setwd('S:/brenda_project')
+
+df <- read.xlsx('IMAGEN_siblings.xlsx')
+
+# 1. Remove "-I" from the User.code column
+df$User.code <- gsub("-I", "", df$User.code)
+
+# 2. Check for repeat ID codes between the two columns
+# (remove "-I" from Other.code too, if needed)
+df$Subject_IDs <- gsub("-I", "", df$Subject_IDs)
+
+# Find duplicates between the two columns
+repeat_ids <- intersect(df$User.code, df$Subject_IDs)
+
+# Output the repeated IDs
+print("Repeated IDs")
+print(repeat_ids)
