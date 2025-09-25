@@ -1,0 +1,27 @@
+# Read the CSV
+df <- read.csv("longlist_vector_scan_id.csv", stringsAsFactors = FALSE)
+
+# Extract the two columns
+col1 <- df[[1]]
+col2 <- df[[2]]
+
+# Find differences
+only_in_col2 <- setdiff(col2, col1)  # in col2 but not col1
+only_in_col1 <- setdiff(col1, col2)  # in col1 but not col2
+
+# Pad the shorter vector with NA so both have equal length
+max_len <- max(length(only_in_col2), length(only_in_col1))
+only_in_col2 <- c(only_in_col2, rep(NA, max_len - length(only_in_col2)))
+only_in_col1 <- c(only_in_col1, rep(NA, max_len - length(only_in_col1)))
+
+# Combine into data frame
+shortlist <- data.frame(
+  NotInCol1 = only_in_col2,
+  NotInCol2 = only_in_col1
+)
+
+# Save as CSV
+write.csv(shortlist, "shortlist.csv", row.names = FALSE)
+
+# Print result
+print(shortlist)
