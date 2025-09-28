@@ -1,7 +1,7 @@
 # Load CSV
 df <- read.csv("vector.csv")
 
-# Calculate median observed increments
+# Calculate median observed increments (median difference between baseline and FU2/FU3)
 median_inc_fu2 <- median(df$Age_FU2 - df$Age_BL, na.rm = TRUE)
 median_inc_fu3 <- median(df$Age_FU3 - df$Age_BL, na.rm = TRUE)
 
