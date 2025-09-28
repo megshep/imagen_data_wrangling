@@ -1,0 +1,23 @@
+library(readxl)
+library(dplyr)
+library(stringr)
+library(writexl)
+
+#load in both excel file
+larger_data <- read_excel("CTQ_scored_full.xlsx")
+subset_ids <- read_excel("imagen_demographics.xlsx")
+
+#remove "-I" from IDs in the CTQ dataset 
+larger_data <- larger_data %>%
+  mutate(Subject_ID = str_remove(Subject_ID, "-I$") %>% str_trim())
+
+# Ensure IDs in subset are characters and trimmed to just be the numerical ID
+subset_ids <- subset_ids %>%
+  mutate(Subject_ID = as.character(Subject_ID) %>% str_trim())
+
+# Filter the CTQ dataset to only include participants in the demographics dataset (because these are my sample)
+filtered_data <- larger_data %>%
+  filter(Subject_ID %in% subset_ids$Subject_ID)
+
+# Save the filtered dataset
+write_xlsx(filtered_data, "sample_demographics.xlsx")
