@@ -1,9 +1,9 @@
-# FTP credentials
+#This is the login information for the IMAGEN database including the SFTP URL. 
 ftp_user <- "msheppard"
-ftp_password <- "Uncinate233@!"
+ftp_password <- "[password]"
 ftp_url <- "sftp://imagen2.cea.fr"
 
-# Read user codes from CSV
+# Read user codes from CSV (User codes are Participant IDs)
 csv_file_path <- "S:/Meg_Stuff/brenda_project/CTQ_FU2.csv"
 data <- read.csv(csv_file_path)
 user_codes <- data$`User.code`
@@ -13,7 +13,7 @@ local_directory <- "S:/Meg_Stuff/brenda_project"
 
 # Define the function to download files for one user
 download_user_files <- function(user_code) {
-  clean_user_code <- gsub("[^0-9]", "", user_code)  # Remove any non-numeric characters
+  clean_user_code <- gsub("[^0-9]", "", user_code)  # Remove any non-numeric characters, this is important as all IDs have -I on them which needs to be removed
   
   # Correct FTP listing command
   getListOfFilesCommand <- paste(
@@ -35,7 +35,7 @@ download_user_files <- function(user_code) {
     fields[length(fields)]
   })
   
-  # Define the correct file pattern: user_code followed by "_dti" and either .nii, .bvec, or .bval
+  # Define the correct file pattern: user_code followed by "_dti" and either .nii, .bvec, or .bval (as these are the files we're interestedi in downloading)
   valid_patterns <- paste0("^", clean_user_code, "_dti\\.(nii|bvec|bval)$")
   
   # Loop through filenames and download matching ones
