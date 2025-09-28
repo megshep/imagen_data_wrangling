@@ -1,29 +1,28 @@
-# FTP server details
+# FTP server details - this is specific to the imagen database
 ftp_user <- "msheppard"
 ftp_password <- "[password]"
-
-ftp_url <- "sftp://imagen2.cea.fr"  # FTP URL
+ftp_url <- "sftp://imagen2.cea.fr"  # FTP URL - specific for imagen
 
 # Specify the local path to the CSV file
-csv_file_path <- "S:/Meg_Stuff/BL_nifti/CTQ_FU2.csv"  # Path to the CSV file with user codes
+csv_file_path <- "S:/Meg_Stuff/BL_nifti/CTQ_FU2.csv"  
 
 # Read the CSV file
 data <- read.csv(csv_file_path)
 
-# Extract the 'User code' column 
-user_codes <- data$`User.code`  # Use backticks if the column has spaces
+# Extract the 'User code' column  - this is what the participant IDs are saved as
+user_codes <- data$`User.code` 
 
 # Local directory where you want to save the files
-local_directory <- "S:/Meg_Stuff/FU3_nifti"      # Local directory to save downloaded files
+local_directory <- "S:/Meg_Stuff/FU3_nifti"      
 
 # Loop through each user code and download the matching file
 for (user_code in user_codes) {
   
-  # Remove alphabetic letters and hyphen from the user code
+  # Remove alphabetic letters and hyphens from the user code because each code has -I in it that needs to be removed
   user_code <- gsub("[^0-9]", "", user_code)
   
-  # Construct the remote file path 
-  remote_file <- paste0("/data/imagen/2.7/FU3/imaging/nifti/", user_code, "/SessionA/ADNI_MPRAGE/")
+  # Construct the remote file path - this is needed because the MRI scans are saved in files titled by their own Participant ID, so this needs to be built into the remote file path
+  remote_file <- paste0("/data/imagen/2.7/BL/imaging/nifti/", user_code, "/SessionA/ADNI_MPRAGE/")
   
   # Local file path
   local_file <- file.path(local_directory, paste0(user_code, ".nii.gz"))
@@ -39,7 +38,7 @@ for (user_code in user_codes) {
   
   getListOfFilesCommand <- paste("c:/curl/bin/curl.exe --insecure -k --user", paste0(ftp_user, ":", ftp_password), paste0("sftp://imagen2.cea.fr/data/imagen/2.7/BL/imaging/nifti/", user_code, "/SessionA/ADNI_MPRAGE/"))
   
-  # Get a list of files in the directory of the user code using system call to curl with -k parameter (make sure path to curl is correct!)
+  # Get a list of files in the directory of the user code using the system call to curl with -k parameter (make sure path to curl is correct!)
   directory_listing <- system(getListOfFilesCommand, intern = TRUE)
   
   filenames <- sapply(directory_listing, function(line) {
