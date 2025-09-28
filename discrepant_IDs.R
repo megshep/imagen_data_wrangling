@@ -1,7 +1,6 @@
-# Load required packages
 library(openxlsx)
 
-# Paths to your 3 Excel files
+# Paths to your 3 Excel files (for my analysis, it's 3 because I have 3 time points in my analysis)
 file1 <- "S:/Meg_Stuff/BL_nifti/subject_ids_BL_unique.xlsx"
 file2 <- "S:/Meg_Stuff/FU2_nifti/subject_ids_FU2_unique.xlsx"
 file3 <- "S:/Meg_Stuff/FU3_nifti/subject_ids_FU3_unique.xlsx"
