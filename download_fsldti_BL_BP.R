@@ -1,29 +1,32 @@
-#This is the login information for the IMAGEN database including the SFTP URL. 
+# FTP login information
 ftp_user <- "msheppard"
 ftp_password <- "[password]"
 ftp_url <- "sftp://imagen2.cea.fr"
 
 # Read user codes from CSV (User codes are Participant IDs)
-csv_file_path <- "S:/Meg_Stuff/brenda_project/CTQ_FU2.csv"
+csv_file_path <- "S:/niamh_project/CTQ/final_data.csv"
 data <- read.csv(csv_file_path)
 user_codes <- data$`User.code`
 
 # Local output path
-local_directory <- "S:/Meg_Stuff/brenda_project"
+local_directory <- "S:/niamh_project/fu3_scans"
 
 # Define the function to download files for one user
 download_user_files <- function(user_code) {
-  clean_user_code <- gsub("[^0-9]", "", user_code)  # Remove any non-numeric characters, this is important as all IDs have -I on them which needs to be removed
+  clean_user_code <- gsub("[^0-9]", "", user_code)  # Remove non-numeric characters (-I)
   
-  # Correct FTP listing command
+  # Correct FTP listing command - this is where the path is to change if you want a different timepoint
   getListOfFilesCommand <- paste(
     "c:/curl/bin/curl.exe --insecure -k --user", 
     paste0(ftp_user, ":", ftp_password), 
-    paste0("sftp://imagen2.cea.fr/data/imagen/2.7/BL/imaging/fsl_dti/", clean_user_code, "/")
+    paste0("sftp://imagen2.cea.fr/data/imagen/2.7/FU3/imaging/fsl_dti/", clean_user_code, "/")
   )
   
   # Get a list of files in the directory
-  directory_listing <- tryCatch(system(getListOfFilesCommand, intern = TRUE), error = function(e) return(NULL))
+  directory_listing <- tryCatch(
+    system(getListOfFilesCommand, intern = TRUE),
+    error = function(e) return(NULL)
+  )
   
   if (is.null(directory_listing)) {
     cat("Error retrieving files for user:", clean_user_code, "\n")
@@ -35,42 +38,50 @@ download_user_files <- function(user_code) {
     fields[length(fields)]
   })
   
-  # Define the correct file pattern: user_code followed by "_dti" and either .nii, .bvec, or .bval (as these are the files we're interestedi in downloading)
-  valid_patterns <- paste0("^", clean_user_code, "_dti\\.(nii|bvec|bval)$")
+  # --- Updated regex to grab all 4 types: bvec, bval, dti.nii.gz, dti_ecc.nii.gz ---
+  valid_patterns <- paste0(
+    "^", clean_user_code, "_dti(_ecc)?\\.nii\\.gz$",   # _dti.nii.gz and _dti_ecc.nii.gz
+    "|^", clean_user_code, "_dti\\.(bvec|bval)$"       # .bvec and .bval
+  )
+
   
   # Loop through filenames and download matching ones
   for (f in filenames) {
     if (grepl(valid_patterns, f)) {
       
-      # Correctly construct the remote file path: /data/imagen/2.7/BL/imaging/fsl_dti/{usercode}/{usercode}_dti.{nii.gz|bvec|bval}
-      remote_file <- paste0("/data/imagen/2.7/BL/imaging/fsl_dti/", clean_user_code, "/", clean_user_code, "_dti", sub(".*(_dti.*)", "\\1", f))
+      # Construct the remote file path
+      remote_file <- paste0("/data/imagen/2.7/FU3/imaging/fsl_dti/", clean_user_code, "/", f)
       ftp_full_url <- paste0(ftp_url, remote_file)
       
       # Define the local path where the file will be saved
-      local_file <- file.path(local_directory, paste0(clean_user_code, "_", f))  # Save as usercode_filename.ext
+      local_file <- file.path(local_directory, paste0(clean_user_code, "_", f))
       
-      # Build the curl command for the system call to download the file
+      # Build the curl command
       curl_command <- paste(
         "c:/curl/bin/curl.exe --insecure --verbose --user", 
         paste0(ftp_user, ":", ftp_password), 
-        "--retry 3",  # Retry 3 times
-        "--retry-delay 60",  # Wait 60 seconds between retries
-        "--max-time 3600",  # Set max time (1 hour) per download attempt
-        "--output", shQuote(local_file),  # Output file path
-        ftp_full_url  # Remote URL to download from
+        "--retry 3",
+        "--retry-delay 60",
+        "--max-time 3600",
+        "--output", shQuote(local_file),
+        ftp_full_url
       )
       
-      # Run the system curl command to download the file
-      system(curl_command)
-      print(paste("Downloaded:", f, "to", local_file))
+      # Run the system curl command and check success
+      result <- system(curl_command)
+      if (result == 0) {
+        print(paste("Downloaded:", f, "to", local_file))
+      } else {
+        print(paste("FAILED:", f))
+      }
       
-      # Add a 60 second delay between downloads to prevent server throttling
+      # 60-second delay between downloads
       for (i in 60:1) {
-        cat("Waiting", i, "seconds...\r")  # \r returns cursor to start of line
-        flush.console()                    # Ensures immediate output
+        cat("Waiting", i, "seconds...\r")
+        flush.console()
         Sys.sleep(1)
       }
-      cat("\n")  # New line after countdown
+      cat("\n")
     }
   }
   
